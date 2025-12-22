@@ -357,7 +357,9 @@ Rscript 07_reference_mapping/map_snatacseq.R \
 ## Citation
 
 If you use this pipeline, please cite:
-- Seurat: Hao et al., Cell 2021
-- Signac: Stuart et al., Cell 2019
-- Harmony: Korsunsky et al., Nat Methods 2019
+- **Seurat**: Hao et al., Cell 2021
+- **Signac**: Stuart et al., Cell 2019
+- **Harmony**: Korsunsky et al., Nat Methods 2019
+- **SoupX**: Young & Behjati, GigaScience 2020 (for GEX ambient RNA correction)
+- **scDblFinder**: Germain et al., Genome Biology 2021 (for doublet detection; Amulet method for ATAC-seq doublet detection)
 
