@@ -25,8 +25,8 @@ This two-phase approach allows for quality control and filtering between integra
 - `combine_atac_peaks.R`: Combines peaks from all samples into a unified peak set (run once after all samples processed)
 - `process_atac_unified_peaks.R`: Quantifies each sample's fragments against the unified peak set, creates `macs2_combined` assay (essential for integration)
 
-**Quality Control:**
-- `check_sample_quality.R`: Aggregates QC metrics from all samples, creates summary tables and combined metadata
+**Sample Quality Control:**
+- `check_sample_quality.R`: Aggregates QC metrics from all samples, creates summary tables for sample quality evaluation and reference sample selection
 
 ### Step 2: Phase 1 - Modality-Specific Integration
 
@@ -80,10 +80,8 @@ CellRanger Arc Output
     ├── process_atac_sample.R
     ├── process_atac_sample_qc.R
     ├── combine_atac_peaks.R          # Combine peaks across all samples
-    └── process_atac_unified_peaks.R  # Quantify each sample against unified peaks
-    ↓
-06_quality_control/        # Quality checks (run anytime)
-    └── check_sample_quality.R         # Aggregate QC metrics
+    ├── process_atac_unified_peaks.R  # Quantify each sample against unified peaks
+    └── check_sample_quality.R        # Aggregate QC metrics for sample evaluation
     ↓
 02_integration_phase1/     # Phase 1: Modality-specific integration
     ├── integrate_gex_phase1.R          # Main GEX integration (Harmony)
@@ -103,9 +101,10 @@ CellRanger Arc Output
     └── integrate_atac_phase2.R        # Harmony
     ↓
 05_wnn_phase2/             # Phase 2: Final WNN integration
-    └── integrate_wnn_phase2.R         # Final WNN with subclustering
+    ├── integrate_wnn_phase2.R         # Final WNN with subclustering
+    └── subcluster_and_annotate_final.R
     ↓
-07_reference_mapping/      # Map new samples to reference (optional)
+06_reference_mapping/      # Map new samples to reference (optional)
     ├── map_scrnaseq.R
     └── map_snatacseq.R
 ```
@@ -120,7 +119,8 @@ multiome/
 │   ├── process_atac_sample.R
 │   ├── process_atac_sample_qc.R
 │   ├── combine_atac_peaks.R
-│   └── process_atac_unified_peaks.R
+│   ├── process_atac_unified_peaks.R
+│   └── check_sample_quality.R        # Sample QC summary for reference selection
 │
 ├── 02_integration_phase1/     # Phase 1 GEX/ATAC integration
 │   ├── integrate_gex_phase1.R
@@ -138,12 +138,10 @@ multiome/
 │   └── integrate_atac_phase2.R
 │
 ├── 05_wnn_phase2/              # Phase 2 final WNN
-│   └── integrate_wnn_phase2.R
+│   ├── integrate_wnn_phase2.R
+│   └── subcluster_and_annotate_final.R
 │
-├── 06_quality_control/         # QC scripts
-│   └── check_sample_quality.R
-│
-└── 07_reference_mapping/        # Reference mapping
+└── 06_reference_mapping/        # Reference mapping
     ├── map_scrnaseq.R
     └── map_snatacseq.R
 ```
@@ -216,11 +214,12 @@ Rscript 01_preprocessing/process_atac_unified_peaks.R \
   /path/to/peak_macs2_combined_across_samples.csv
 ```
 
-### Quality Control Summary
+### Sample Quality Control Summary
 
 ```bash
 # After processing all samples, generate QC summary
-Rscript 06_quality_control/check_sample_quality.R \
+# This helps identify high-quality samples for use as reference samples
+Rscript 01_preprocessing/check_sample_quality.R \
   /path/to/input
 ```
 
@@ -269,9 +268,33 @@ Rscript 03_wnn_phase1/combine_gex_atac.R \
   /path/to/input \
   /path/to/donor_metadata.csv
 
-# Perform WNN integration
+# Perform WNN integration (generates wnn2-wnn6)
 Rscript 03_wnn_phase1/integrate_wnn_phase1.R \
   /path/to/input \
+  4
+```
+
+### Evaluation and Annotation
+
+```bash
+# Annotate per-modality clusters (GEX and ATAC)
+# This creates annotations used for evaluating WNN results
+Rscript 03_wnn_phase1/annotate_per_modality_clusters.R \
+  /path/to/input \
+  /path/to/output
+
+# Generate evaluation plots for all WNN results
+# Note: This requires marker genes - customize evaluate_wnn_results.R 
+# with your marker gene list for full functionality
+Rscript 03_wnn_phase1/evaluate_wnn_results.R \
+  /path/to/input \
+  4
+
+# After manual evaluation, annotate selected WNN result and filter
+# This script annotates WNN5 clusters and filters mixed/contaminated cells
+Rscript 03_wnn_phase1/annotate_wnn_filter_phase2.R \
+  /path/to/input \
+  /path/to/output \
   4
 ```
 
@@ -305,17 +328,30 @@ Rscript 05_wnn_phase2/integrate_wnn_phase2.R \
   4
 ```
 
+### Final Annotation and Subclustering (After Phase 2 WNN)
+
+```bash
+# Subcluster specific clusters and create final celltype2 annotation
+# This identifies rare cell types (e.g., epsilon) through subclustering
+Rscript 05_wnn_phase2/subcluster_and_annotate_final.R \
+  /path/to/input \
+  /path/to/phase2_wnn_object.rds \
+  4
+```
+
+**Note**: This script performs subclustering on clusters 11, 12, 13, 14, and 15 from the Phase 2 WNN results to identify rare cell types (epsilon cells are identified from cluster 15). It creates the final `celltype2` annotation used in downstream analysis and filters out "mixed" clusters to produce the final cleaned object (`multiome40DonorsRef-v2.rds`).
+
 ### Reference Mapping
 
 ```bash
 # Map scRNA-seq to reference
-Rscript 07_reference_mapping/map_scrnaseq.R \
+Rscript 06_reference_mapping/map_scrnaseq.R \
   /path/to/reference.rds \
   /path/to/query.rds \
   /path/to/output
 
 # Map snATAC-seq to reference
-Rscript 07_reference_mapping/map_snatacseq.R \
+Rscript 06_reference_mapping/map_snatacseq.R \
   /path/to/reference.rds \
   /path/to/query.rds \
   /path/to/output
@@ -327,11 +363,16 @@ Rscript 07_reference_mapping/map_snatacseq.R \
 1. **Preprocessing**: Process all individual samples first (GEX and ATAC)
 2. **Peak Combination**: Run `combine_atac_peaks.R` once after all ATAC samples are processed
 3. **Unified Peaks**: Run `process_atac_unified_peaks.R` for each sample using the combined peaks
-4. **Quality Control**: Run `check_sample_quality.R` anytime to generate QC summaries
+4. **Sample Quality Control**: Run `check_sample_quality.R` after processing all samples to evaluate sample quality and identify high-quality samples for use as reference samples in reference-based integration
 5. **Phase 1 Integration**: Run GEX integrations, then ATAC integrations
 6. **Phase 1 WNN**: Combine GEX+ATAC, then run WNN integration
-7. **Evaluation**: Manually evaluate WNN results and filter low-quality cells
-8. **Phase 2**: Re-integrate filtered data, then final WNN
+7. **Evaluation & Annotation**: 
+   - Run `annotate_per_modality_clusters.R` to annotate GEX/ATAC clusters
+   - Run `evaluate_wnn_results.R` to generate evaluation plots (requires marker genes)
+   - Manually review plots and select best WNN result
+   - Run `annotate_wnn_filter_phase2.R` to annotate selected WNN and filter mixed cells (three-step filtering)
+8. **Phase 2**: Re-integrate filtered data (GEX and ATAC separately), then final WNN
+9. **Final Annotation**: Run `subcluster_and_annotate_final.R` to subcluster specific clusters, identify rare cell types (e.g., epsilon), create `celltype2` annotation, and generate final cleaned object
 
 ### Key Concepts
 

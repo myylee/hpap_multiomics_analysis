@@ -5,6 +5,11 @@
 # After filtering low-quality cells based on Phase 1 WNN results, this script
 # re-runs ATAC integration using Harmony.
 #
+# IMPORTANT FOR REPRODUCIBILITY:
+# - UMAP uses seed.use = 1234 to ensure identical layouts
+# - Clustering resolution = 2 matches the original analysis
+# - LSI dimensions 2:30 are used (dim 1 typically captures sequencing depth)
+#
 # Usage: Rscript integrate_atac_phase2.R <input_path> <filtered_object_path> [n_workers]
 # ==============================================================================
 
@@ -71,12 +76,14 @@ seurat <- FindClusters(
   cluster.name = "macs2Combined_wnn5Filtered_harmony_clusters"
 )
 
+# CRITICAL: Use seed.use = 1234 for reproducibility
 seurat <- RunUMAP(
   seurat,
   reduction = "macs2Combined.harmony2",
   dims = 2:30,
   reduction.name = "macs2Combined.harmony2.umap",
-  reduction.key = 'HARMONY2UMAP_'
+  reduction.key = 'HARMONY2UMAP_',
+  seed.use = 1234  # Fixed seed for reproducibility
 )
 
 # Visualize

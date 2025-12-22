@@ -5,6 +5,11 @@
 # After filtering low-quality cells based on Phase 1 WNN results, this script
 # re-runs GEX integration using RPCA with reference samples.
 #
+# IMPORTANT FOR REPRODUCIBILITY:
+# - UMAP uses seed.use = 1234 to ensure identical layouts
+# - Clustering uses method = "igraph" (Louvain) for consistency
+# - Reference sample indices must match the original analysis
+#
 # Usage: Rscript integrate_gex_phase2.R <input_path> <filtered_object_path> [npc] [n_workers] [reference_indices]
 # ==============================================================================
 
@@ -63,13 +68,15 @@ seurat <- IntegrateLayers(
 # Step 3: UMAP, clustering, and visualization
 # ==============================================================================
 cat("Running UMAP and clustering...\n")
+# CRITICAL: Use seed.use = 1234 for reproducibility
 seurat <- RunUMAP(
   seurat,
   reduction = "combinedSctNormGEX.rpcaRefIntegrated.run2",
   reduction.key = 'RUN2RPCREFASCTNORMGEXUMAP_',
   dims = 1:npc,
   verbose = FALSE,
-  reduction.name = 'rpcaRefIntegratedSctNormGEXRun2.umap'
+  reduction.name = 'rpcaRefIntegratedSctNormGEXRun2.umap',
+  seed.use = 1234  # Fixed seed for reproducibility
 )
 
 seurat <- FindNeighbors(

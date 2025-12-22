@@ -1,12 +1,22 @@
 #!/usr/bin/env Rscript
 # ==============================================================================
-# Quality Control Summary for Multiome Samples
+# Sample Quality Control Summary
 #
 # This script aggregates quality control metrics from all processed samples
 # and creates summary tables for:
 # 1. GEX QC metrics per sample
 # 2. ATAC QC metrics per sample
 # 3. Combined multiome metrics (cells with both GEX and ATAC data)
+#
+# This summary is used to:
+# - Evaluate sample quality across all donors
+# - Identify high-quality samples suitable for use as reference samples
+#   in reference-based integration (RPCA reference-based GEX and RLSI ATAC)
+# - Make decisions about which samples to include in downstream analysis
+#
+# The output file (sampleQC_summary.csv) contains per-sample metrics that
+# can be used to select reference samples (typically high-quality control samples
+# with good QC metrics across both GEX and ATAC modalities).
 #
 # Usage: Rscript check_sample_quality.R <input_path>
 # ==============================================================================

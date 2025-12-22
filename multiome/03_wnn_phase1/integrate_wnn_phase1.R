@@ -4,15 +4,30 @@
 #
 # This script performs Weighted Nearest Neighbor (WNN) integration combining
 # GEX and ATAC modalities using different integration method combinations:
-# 1. Harmony GEX + Harmony ATAC
-# 2. Harmony GEX + RLSI ATAC
-# 3. RPCA All GEX + Harmony ATAC
-# 4. RPCA All GEX + RLSI ATAC
-# 5. RPCA Ref GEX + Harmony ATAC
-# 6. RPCA Ref GEX + RLSI ATAC
+# 1. Harmony GEX + Harmony ATAC (wnn1)
+# 2. Harmony GEX + RLSI ATAC (wnn2)
+# 3. RPCA All GEX + Harmony ATAC (wnn3)
+# 4. RPCA All GEX + RLSI ATAC (wnn4)
+# 5. RPCA Ref GEX + Harmony ATAC (wnn5) - SELECTED FOR FINAL ANALYSIS
+# 6. RPCA Ref GEX + RLSI ATAC (wnn6)
 #
 # WNN finds the optimal weighting between modalities to create a unified
 # representation of the data.
+#
+# IMPORTANT FOR REPRODUCIBILITY:
+# - All UMAP runs use seed.use = 1234 to ensure identical layouts
+# - Clustering uses algorithm = 3 (Louvain) for consistency
+# - Cluster IDs are sorted numerically before any annotation
+#
+# WORKFLOW:
+# After running this script, you need to:
+# 1. Manually annotate each WNN result by examining cluster quality plots
+# 2. Compare WNN results to select the best integration (we selected wnn5)
+# 3. Filter mixed/contaminated clusters from the selected WNN result
+# 4. Proceed to Phase 2 re-integration on filtered cells
+#
+# See annotate_per_modality_clusters.R for per-modality cluster annotations.
+# See annotate_wnn_filter_phase2.R for WNN5 annotation and filtering workflow.
 #
 # Usage: Rscript integrate_wnn_phase1.R <input_path> [n_workers]
 # ==============================================================================
@@ -78,12 +93,15 @@ for (i in 2:length(wnn_integration_list)) {
   )
   
   # Run UMAP
+  # CRITICAL: Use seed.use = 1234 for reproducibility
+  # Changing this seed will result in different UMAP layouts and may affect
+  # cluster assignments, making it difficult to reproduce published results.
   seurat <- RunUMAP(
     seurat,
     nn.name = paste0("weighted.nn", key_i),
     reduction.name = paste0("wnn", key_i, ".umap"),
     reduction.key = paste0("wnn", key_i, "UMAP_"),
-    seed.use = 1234
+    seed.use = 1234  # Fixed seed for reproducibility
   )
   
   # Find clusters
@@ -128,7 +146,14 @@ for (i in 2:length(wnn_integration_list)) {
 cat("Saving object with WNN integrations...\n")
 saveRDS(seurat, paste0(inPath, '/seurat_gexAndAtac.rds'))
 
-cat("Phase 1 WNN integration complete!\n")
+cat("\nPhase 1 WNN integration complete!\n")
 cat("WNN integrations performed:", paste(names(wnn_integration_list)[-1], collapse = ", "), "\n")
-cat("Next step: Evaluate WNN results and filter low-quality cells before Phase 2 integration.\n")
+cat("\nNext steps:\n")
+cat("1. Generate cluster quality plots for each WNN result\n")
+cat("2. Manually annotate WNN clusters by examining marker expression\n")
+cat("3. Compare WNN results and select the best integration\n")
+cat("4. Filter mixed/contaminated clusters from selected WNN result\n")
+cat("5. Run annotate_wnn_filter_phase2.R to annotate and filter wnn5\n")
+cat("6. Proceed to Phase 2 re-integration on filtered cells\n")
+cat("\nIMPORTANT: For reproducibility, ensure all downstream steps also use seed.use = 1234!\n")
 

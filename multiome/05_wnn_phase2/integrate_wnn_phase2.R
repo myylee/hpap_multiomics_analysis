@@ -5,6 +5,15 @@
 # After Phase 2 re-integration of GEX and ATAC, this script performs the
 # final WNN integration using the re-integrated reductions.
 #
+# This produces the final integrated multiome object used for downstream
+# analysis. The final reduction is wnn5filteredRun2.umap (also stored as
+# celltype2 in the published analysis).
+#
+# IMPORTANT FOR REPRODUCIBILITY:
+# - UMAP uses seed.use = 1234 to ensure identical layouts
+# - Clustering uses algorithm = 3 (Louvain) for consistency
+# - return.model = TRUE allows projection of new query data
+#
 # Usage: Rscript integrate_wnn_phase2.R <input_path> <filtered_object_path> [n_workers]
 # ==============================================================================
 
@@ -54,13 +63,15 @@ seurat <- FindMultiModalNeighbors(
 )
 
 # Run UMAP (with model for potential projection)
+# CRITICAL: Use seed.use = 1234 for reproducibility
+# return.model = TRUE allows projection of query datasets onto this reference
 seurat <- RunUMAP(
   seurat,
   nn.name = "weighted.nn5filteredRun2",
   reduction.name = "wnn5filteredRun2.umap",
   reduction.key = "wnn5filteredRun2Run2UMAP_",
-  return.model = TRUE,
-  seed.use = 1234
+  return.model = TRUE,  # Allow projection of query data
+  seed.use = 1234  # Fixed seed for reproducibility
 )
 
 # ==============================================================================
