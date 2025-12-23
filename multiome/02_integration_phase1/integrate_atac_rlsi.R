@@ -11,7 +11,8 @@
 # 5. Clusters and visualizes results
 #
 # Usage: Rscript integrate_atac_rlsi.R <input_path> <metadata_path> [npc] [n_workers] [reference_indices]
-#   reference_indices: Comma-separated list of sample indices to use as reference
+#   reference_indices: Comma-separated list of sample indices to use as reference.
+#                      These indices refer to the position of donors in the sorted list of unique donors.
 #                      Default: 5,6,9,16,21,27,29,31,32 (high-quality control samples)
 # ==============================================================================
 
@@ -33,10 +34,14 @@ npc <- ifelse(length(args) >= 3, as.numeric(args[3]), 30)
 n_workers <- ifelse(length(args) >= 4, as.numeric(args[4]), 4)
 
 # Parse reference indices
+# NOTE: These indices refer to the position of donors in the sorted list of unique donors.
+# They correspond to high-quality control samples used as references for integration.
+# The default indices (5, 6, 9, 16, 21, 27, 29, 31, 32) correspond to the following donor IDs
+# when sorted: HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 if (length(args) >= 5) {
   reference <- as.numeric(strsplit(args[5], ",")[[1]])
 } else {
-  # Default: high-quality control samples
+  # Default: high-quality control samples (indices refer to donor positions)
   reference <- c(5, 6, 9, 16, 21, 27, 29, 31, 32)
 }
 

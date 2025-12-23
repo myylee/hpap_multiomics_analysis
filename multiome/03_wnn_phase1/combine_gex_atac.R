@@ -158,5 +158,5 @@ saveRDS(seurat, paste0(inPath, '/seurat_gexAndAtac.rds'))
 
 cat("Combined GEX and ATAC object saved!\n")
 cat("Object:", paste0(inPath, '/seurat_gexAndAtac.rds'), "\n")
-cat("Next step: Run integrate_wnn_phase1.R for WNN integration.\n")
+cat("Next step: Run annotate_per_modality_clusters.R, then integrate_wnn.R for WNN integration.\n")
 

@@ -9,6 +9,7 @@
 # - UMAP uses seed.use = 1234 to ensure identical layouts
 # - Clustering uses method = "igraph" (Louvain) for consistency
 # - Reference sample indices must match the original analysis
+#   NOTE: Reference indices refer to the position of donors in the sorted list of unique donors.
 #
 # Usage: Rscript integrate_gex_phase2.R <input_path> <filtered_object_path> [npc] [n_workers] [reference_indices]
 # ==============================================================================
@@ -32,10 +33,14 @@ npc <- ifelse(length(args) >= 3, as.numeric(args[3]), 30)
 n_workers <- ifelse(length(args) >= 4, as.numeric(args[4]), 4)
 
 # Parse reference indices
+# NOTE: These indices refer to the position of donors in the sorted list of unique donors.
+# They correspond to high-quality control samples used as references for integration.
+# The default indices (5, 6, 9, 16, 21, 27, 29, 31, 32) correspond to the following donor IDs
+# when sorted: HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 if (length(args) >= 5) {
   reference <- as.numeric(strsplit(args[5], ",")[[1]])
 } else {
-  # Default: high-quality control samples
+  # Default: high-quality control samples (indices refer to donor positions)
   reference <- c(5, 6, 9, 16, 21, 27, 29, 31, 32)
 }
 
@@ -52,7 +57,7 @@ seurat <- readRDS(filteredObjectPath)
 # Step 2: RPCA re-integration with reference
 # ==============================================================================
 cat("Running RPCA re-integration (reference-based)...\n")
-cat("Using reference samples (indices):", reference, "\n")
+cat("Using reference samples (indices, referring to donor positions):", reference, "\n")
 
 seurat <- IntegrateLayers(
   object = seurat,

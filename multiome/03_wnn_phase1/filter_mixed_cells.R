@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 # ==============================================================================
-# Phase 1 to Phase 2: WNN Annotation, Filtering, and Phase 2 Re-integration
+# Phase 1: Filter Mixed Cells for Phase 2 Re-integration
 #
-# This script documents Part 1 of the filtering workflow:
+# This script performs the filtering step at the end of Phase 1:
 # 1. Manual annotation of WNN5 clusters
 # 2. Three-step filtering of mixed/contaminated clusters using:
 #    - WNN5 annotations (wnn5Annot)
@@ -37,7 +37,7 @@
 # and integrate_atac_phase2.R), followed by subclustering and final annotation
 # (see subcluster_and_annotate_final.R).
 #
-# Usage: Rscript annotate_wnn_filter_phase2.R <input_path> <output_path> [n_workers]
+# Usage: Rscript filter_mixed_cells.R <input_path> <output_path> [n_workers]
 # ==============================================================================
 
 library(Seurat)
@@ -47,7 +47,7 @@ library(future)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  stop("Usage: Rscript annotate_wnn_filter_phase2.R <input_path> <output_path> [n_workers]")
+  stop("Usage: Rscript filter_mixed_cells.R <input_path> <output_path> [n_workers]")
 }
 
 inPath <- args[1]

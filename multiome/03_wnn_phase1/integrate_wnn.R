@@ -27,9 +27,9 @@
 # 4. Proceed to Phase 2 re-integration on filtered cells
 #
 # See annotate_per_modality_clusters.R for per-modality cluster annotations.
-# See annotate_wnn_filter_phase2.R for WNN5 annotation and filtering workflow.
+# See filter_mixed_cells.R for WNN5 annotation and filtering workflow.
 #
-# Usage: Rscript integrate_wnn_phase1.R <input_path> [n_workers]
+# Usage: Rscript integrate_wnn.R <input_path> [n_workers]
 # ==============================================================================
 
 library(Seurat)
@@ -43,7 +43,7 @@ library(future)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 1) {
-  stop("Usage: Rscript integrate_wnn_phase1.R <input_path> [n_workers]")
+  stop("Usage: Rscript integrate_wnn.R <input_path> [n_workers]")
 }
 
 inPath <- args[1]
@@ -153,7 +153,7 @@ cat("1. Generate cluster quality plots for each WNN result\n")
 cat("2. Manually annotate WNN clusters by examining marker expression\n")
 cat("3. Compare WNN results and select the best integration\n")
 cat("4. Filter mixed/contaminated clusters from selected WNN result\n")
-cat("5. Run annotate_wnn_filter_phase2.R to annotate and filter wnn5\n")
+cat("5. Run filter_mixed_cells.R to annotate and filter wnn5\n")
 cat("6. Proceed to Phase 2 re-integration on filtered cells\n")
 cat("\nIMPORTANT: For reproducibility, ensure all downstream steps also use seed.use = 1234!\n")
 

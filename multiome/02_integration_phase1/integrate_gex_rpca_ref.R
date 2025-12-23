@@ -7,7 +7,8 @@
 # This is run after integrate_gex_phase1.R
 #
 # Usage: Rscript integrate_gex_rpca_ref.R <input_path> [npc] [n_workers] [reference_indices]
-#   reference_indices: Comma-separated list of sample indices to use as reference
+#   reference_indices: Comma-separated list of sample indices to use as reference.
+#                      These indices refer to the position of donors in the sorted list of unique donors.
 #                      Default: 5,6,9,16,21,27,29,31,32 (high-quality control samples)
 # ==============================================================================
 
@@ -30,10 +31,14 @@ npc <- ifelse(length(args) >= 2, as.numeric(args[2]), 30)
 n_workers <- ifelse(length(args) >= 3, as.numeric(args[3]), 4)
 
 # Parse reference indices
+# NOTE: These indices refer to the position of donors in the sorted list of unique donors.
+# They correspond to high-quality control samples used as references for integration.
+# The default indices (5, 6, 9, 16, 21, 27, 29, 31, 32) correspond to the following donor IDs
+# when sorted: HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 if (length(args) >= 4) {
   reference <- as.numeric(strsplit(args[4], ",")[[1]])
 } else {
-  # Default: high-quality control samples
+  # Default: high-quality control samples (indices refer to donor positions)
   reference <- c(5, 6, 9, 16, 21, 27, 29, 31, 32)
 }
 
@@ -45,7 +50,7 @@ options(future.globals.maxSize = 200000 * 1024^2)
 cat("Loading unintegrated object...\n")
 seurat_combined_v5 <- readRDS(paste0(inPath, '/seurat_sctNormGEX_unintegrated.rds'))
 
-cat("Using reference samples:", reference, "\n")
+cat("Using reference samples (indices, referring to donor positions):", reference, "\n")
 
 # ==============================================================================
 # RPCA Integration (Reference-Based)

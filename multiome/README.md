@@ -41,17 +41,16 @@ This two-phase approach allows for quality control and filtering between integra
 
 ### Step 3: Phase 1 - WNN Integration
 
-- `combine_gex_atac.R`: Combines GEX and ATAC objects, adds integration metadata and reductions
-- `integrate_wnn_phase1.R`: Performs WNN integration using different GEX+ATAC reduction combinations:
-  - WNN2: Harmony GEX + RLSI ATAC
-  - WNN3: RPCA All GEX + Harmony ATAC
-  - WNN4: RPCA All GEX + RLSI ATAC
-  - WNN5: RPCA Ref GEX + Harmony ATAC
-  - WNN6: RPCA Ref GEX + RLSI ATAC
-
-### Step 4: Evaluation and Filtering
-
-Evaluate WNN results (typically WNN5 or WNN6) and filter out low-quality cells (e.g., mixed populations, low-quality clusters). This filtering step prepares the data for Phase 2 re-integration.
+1. **Combine GEX and ATAC**: `combine_gex_atac.R` - Combines GEX and ATAC objects, adds integration metadata and reductions into one Seurat object
+2. **Annotate Per-Modality Clusters**: `annotate_per_modality_clusters.R` - Annotates donor-integrated results per modality (GEX and ATAC separately)
+3. **Evaluate Integration Results**: `evaluate_wnn_results.R` - Generates plots to evaluate integration and annotation results
+4. **WNN Integration**: `integrate_wnn.R` - Performs WNN integration using different GEX+ATAC reduction combinations:
+   - WNN2: Harmony GEX + RLSI ATAC
+   - WNN3: RPCA All GEX + Harmony ATAC
+   - WNN4: RPCA All GEX + RLSI ATAC
+   - WNN5: RPCA Ref GEX + Harmony ATAC (selected for final analysis)
+   - WNN6: RPCA Ref GEX + RLSI ATAC
+5. **Filter Mixed Cells**: `filter_mixed_cells.R` - Annotates selected WNN result (WNN5) and filters mixed/contaminated clusters using three-step filtering (WNN annotations, ATAC RLSI clusters, ATAC Harmony clusters)
 
 ### Step 5: Phase 2 - Re-integration
 
@@ -91,8 +90,11 @@ CellRanger Arc Output
     └── integrate_atac_rlsi.R           # ATAC RLSI integration (reference-based)
     ↓
 03_wnn_phase1/            # Phase 1: WNN integration
-    ├── combine_gex_atac.R              # Combine GEX and ATAC data
-    └── integrate_wnn_phase1.R          # Multiple GEX+ATAC combinations
+    ├── combine_gex_atac.R              # Combine GEX and ATAC data into one object
+    ├── annotate_per_modality_clusters.R # Annotate per-modality clusters
+    ├── evaluate_wnn_results.R          # Evaluate integration results with plots
+    ├── integrate_wnn.R                 # WNN integration (multiple combinations)
+    └── filter_mixed_cells.R            # Filter mixed/contaminated cells
     ↓
 [Evaluation and Filtering]
     ↓
@@ -131,7 +133,10 @@ multiome/
 │
 ├── 03_wnn_phase1/             # Phase 1 WNN integration
 │   ├── combine_gex_atac.R
-│   └── integrate_wnn_phase1.R
+│   ├── annotate_per_modality_clusters.R
+│   ├── evaluate_wnn_results.R
+│   ├── integrate_wnn.R
+│   └── filter_mixed_cells.R
 │
 ├── 04_integration_phase2/      # Phase 2 re-integration
 │   ├── integrate_gex_phase2.R
@@ -158,10 +163,10 @@ For ATAC visualization with fragments:
 
 ## Software Versions
 
+- **R**: 4.2.2
 - **CellRanger Arc**: 2.0.2
 - **Seurat**: 5.1.0
 - **Signac**: 1.13.0
-- **R**: 4.x
 
 ## Dependencies
 
@@ -268,15 +273,6 @@ Rscript 03_wnn_phase1/combine_gex_atac.R \
   /path/to/input \
   /path/to/donor_metadata.csv
 
-# Perform WNN integration (generates wnn2-wnn6)
-Rscript 03_wnn_phase1/integrate_wnn_phase1.R \
-  /path/to/input \
-  4
-```
-
-### Evaluation and Annotation
-
-```bash
 # Annotate per-modality clusters (GEX and ATAC)
 # This creates annotations used for evaluating WNN results
 Rscript 03_wnn_phase1/annotate_per_modality_clusters.R \
@@ -290,9 +286,14 @@ Rscript 03_wnn_phase1/evaluate_wnn_results.R \
   /path/to/input \
   4
 
+# Perform WNN integration (generates wnn2-wnn6)
+Rscript 03_wnn_phase1/integrate_wnn.R \
+  /path/to/input \
+  4
+
 # After manual evaluation, annotate selected WNN result and filter
 # This script annotates WNN5 clusters and filters mixed/contaminated cells
-Rscript 03_wnn_phase1/annotate_wnn_filter_phase2.R \
+Rscript 03_wnn_phase1/filter_mixed_cells.R \
   /path/to/input \
   /path/to/output \
   4
@@ -369,8 +370,9 @@ Rscript 06_reference_mapping/map_snatacseq.R \
 7. **Evaluation & Annotation**: 
    - Run `annotate_per_modality_clusters.R` to annotate GEX/ATAC clusters
    - Run `evaluate_wnn_results.R` to generate evaluation plots (requires marker genes)
-   - Manually review plots and select best WNN result
-   - Run `annotate_wnn_filter_phase2.R` to annotate selected WNN and filter mixed cells (three-step filtering)
+   - Run `integrate_wnn.R` to perform WNN integration with multiple combinations
+   - Manually review plots and select best WNN result (typically WNN5)
+   - Run `filter_mixed_cells.R` to annotate selected WNN and filter mixed cells (three-step filtering)
 8. **Phase 2**: Re-integrate filtered data (GEX and ATAC separately), then final WNN
 9. **Final Annotation**: Run `subcluster_and_annotate_final.R` to subcluster specific clusters, identify rare cell types (e.g., epsilon), create `celltype2` annotation, and generate final cleaned object
 
