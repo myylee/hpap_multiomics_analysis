@@ -388,7 +388,7 @@ Rscript 06_reference_mapping/map_snatacseq.R \
 - Filtering: Remove low-quality cells based on Phase 1 results
 - Phase 2: Re-integration on cleaned dataset for improved results
 
-**WNN Integration**: Weighted Nearest Neighbor integration optimally combines GEX and ATAC modalities. Multiple combinations are tested (WNN2-6) to find the best approach.
+**WNN Integration**: Weighted Nearest Neighbor integration optimally combines GEX and ATAC modalities. Multiple combinations are tested to find the best approach.
 
 ### Technical Details
 - All paths in scripts use command-line arguments
