@@ -3,13 +3,22 @@
 # Map scRNA-seq Query Data to Multiome Reference
 #
 # This script maps scRNA-seq query data to the multiome reference using
-# Seurat's reference mapping approach:
-# 1. Prepares reference (multiome object) for mapping
-# 2. Processes query scRNA-seq data
-# 3. Finds transfer anchors
-# 4. Transfers cell type labels and projects onto reference UMAP
+# Seurat's reference mapping approach. The script assumes the query data
+# contains cells from multiple donors merged together. It will:
+# 1. Create a clean query object and split by donor
+# 2. Process each donor sample separately
+# 3. Map each sample to the reference
+# 4. Combine results
+#
+# NOTE: If analyzing a single sample (one donor), you can skip the splitting
+# and batch processing steps (Step 2) and directly process the query object.
+# Simply comment out the splitting code and use the query object directly in
+# the mapping loop (or replace the loop with a single mapping call).
 #
 # Usage: Rscript map_scrnaseq.R <reference_path> <query_path> <output_dir> [reference_umap]
+#   reference_path: Path to multiome reference object
+#   query_path: Path to query scRNA-seq Seurat object (may contain multiple donors)
+#   output_dir: Directory to save mapping results
 #   reference_umap: Name of UMAP reduction in reference (default: wnn5filteredRun2.umap)
 # ==============================================================================
 
@@ -76,7 +85,7 @@ reference <- FindNeighbors(
 cat("Loading and preparing query data...\n")
 query <- readRDS(file = queryPath)
 
-# Keep only RNA assay
+# Keep only RNA assay to keep dataset small
 query_clean <- CreateSeuratObject(
   counts = query@assays$RNA@counts,
   meta.data = query@meta.data
@@ -87,14 +96,25 @@ gc()
 query <- query_clean
 rm(query_clean)
 
-# Split query by donor for processing
+# Split query by donor for processing multiple samples
+# NOTE: If you have a single sample (one donor), you can skip this splitting
+# step and directly normalize and process the query object. See comments in
+# Step 3 for single-sample processing.
+cat("Splitting query data by donor...\n")
 query@meta.data$donor <- gsub("-.*", "", query$orig.ident)
 query.batches <- SplitObject(query, split.by = "donor")
 query.batches <- lapply(X = query.batches, FUN = NormalizeData, verbose = FALSE)
 
+cat("Found", length(query.batches), "donor(s) in query data.\n")
+
 # ==============================================================================
 # Step 3: Map each query batch to reference
 # ==============================================================================
+# NOTE: If you skipped the splitting step (single sample analysis), you can
+# replace this loop with a single mapping call. First normalize the query:
+#   query <- NormalizeData(query, verbose = FALSE)
+# Then use 'query' directly instead of 'query.batches[[i]]' in the mapping code below.
+
 cat("Mapping query data to reference...\n")
 format_mapping_res <- function(query_seurat) {
   require(dplyr)
@@ -165,8 +185,13 @@ write.csv(mapped_res, file = file.path(out_dir, 'mapping_results.csv'),
           quote = FALSE, row.names = TRUE)
 
 # Merge all query batches
-pancreas.query <- merge(query.batches[[1]], query.batches[2:length(query.batches)], 
-                        merge.dr = "ref.umap")
+# NOTE: If you have only one sample, skip the merge and use query.batches[[1]] directly
+if (length(query.batches) > 1) {
+  pancreas.query <- merge(query.batches[[1]], query.batches[2:length(query.batches)], 
+                          merge.dr = "ref.umap")
+} else {
+  pancreas.query <- query.batches[[1]]
+}
 
 saveRDS(pancreas.query@reductions, 
         file.path(out_dir, 'reduction_scRNAseq_mapped.rds'))
