@@ -244,6 +244,9 @@ Rscript 02_integration_phase1/integrate_gex_rpca_all.R \
   30 \
   4
 
+# Reference-based RPCA integration
+# Reference sample indices (5,6,9,16,21,27,29,31,32) correspond to:
+# HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 Rscript 02_integration_phase1/integrate_gex_rpca_ref.R \
   /path/to/input \
   30 \
@@ -257,6 +260,9 @@ Rscript 02_integration_phase1/integrate_atac_harmony.R \
   30 \
   4
 
+# Reference-based RLSI integration
+# Reference sample indices (5,6,9,16,21,27,29,31,32) correspond to:
+# HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 Rscript 02_integration_phase1/integrate_atac_rlsi.R \
   /path/to/input \
   /path/to/metadata.csv \
@@ -394,7 +400,7 @@ Rscript 06_reference_mapping/map_snatacseq.R \
 - All paths in scripts use command-line arguments
 - Parallel processing is configured using the `future` package
 - Memory requirements vary by step; adjust `future.globals.maxSize` as needed
-- Reference samples (indices 5,6,9,16,21,27,29,31,32) are high-quality control samples used for reference-based integration
+- Reference samples are high-quality control samples used for reference-based integration. The default indices (5,6,9,16,21,27,29,31,32) correspond to the following donor IDs when sorted: HPAP097, HPAP104, HPAP131, HPAP139, HPAP146, HPAP155, HPAP157, HPAP159, HPAP160
 - The final object uses `celltype2` for cell type annotations and `wnn5filteredRun2.umap` for visualization
 
 ## Citation
